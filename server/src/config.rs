@@ -267,6 +267,23 @@ pub struct ChunkingConfig {
     /// The preferred maximum size of a chunk, in bytes.
     #[serde(rename = "max-size")]
     pub max_size: usize,
+
+    /// How many chunks to prefetch concurrently when serving a NAR.
+    ///
+    /// When a NAR is reassembled from chunks on download, this many chunk
+    /// fetches (e.g. S3/R2 GETs) are kept in flight ahead of the consumer. On a
+    /// high-latency object store (R2: ~150ms/GET) the upstream default of 2 is
+    /// far too shallow: small chunks drain in microseconds, then the stream
+    /// stalls on the next GET — so an N-chunk NAR costs ~N serial round-trips.
+    /// Raising this overlaps the GETs, collapsing an N-chunk NAR toward a single
+    /// round-trip of latency. Default 16 (was a hardcoded 2 upstream).
+    #[serde(rename = "nar-prefetch", default = "default_nar_prefetch")]
+    pub nar_prefetch: usize,
+}
+
+/// Default concurrent chunk prefetch depth for NAR downloads.
+fn default_nar_prefetch() -> usize {
+    16
 }
 
 /// Compression configuration.

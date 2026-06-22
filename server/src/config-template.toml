@@ -104,6 +104,11 @@ avg-size = 65536            # 64 KiB
 # The preferred maximum size of a chunk, in bytes
 max-size = 262144           # 256 KiB
 
+# Concurrent chunk prefetch depth when serving a NAR. On a high-latency object
+# store (e.g. R2 ~150ms/GET), a shallow value serializes chunk GETs; raising it
+# overlaps them so an N-chunk NAR costs ~1 round-trip instead of ~N.
+nar-prefetch = 16
+
 # Compression
 [compression]
 # Compression type

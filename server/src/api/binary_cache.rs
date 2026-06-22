@@ -260,9 +260,11 @@ async fn get_nar(
         let chunks: VecDeque<_> = chunks.into_iter().map(Option::unwrap).collect();
         let storage = state.storage().await?.clone();
 
-        // TODO: Make num_prefetch configurable
-        // The ideal size depends on the average chunk size
-        let merged = merge_chunks(chunks, streamer, storage, 2).map_err(|e| {
+        // Concurrent chunk prefetch depth (config: chunking.nar-prefetch).
+        // Upstream hardcoded this to 2, which serializes high-latency object
+        // store GETs (R2). See ChunkingConfig::nar_prefetch.
+        let num_prefetch = state.config.chunking.nar_prefetch;
+        let merged = merge_chunks(chunks, streamer, storage, num_prefetch).map_err(|e| {
             tracing::error!(%e, "Stream error");
             e
         });
